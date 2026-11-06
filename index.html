@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="my">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RayyAi</title>
+  <style>
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,sans-serif;background:#101827;color:#f4f7fb;min-height:100vh;display:flex;justify-content:center}
+    main{width:min(760px,100%);padding:22px 16px;display:flex;flex-direction:column;min-height:100vh}
+    header{padding:12px 4px 18px;border-bottom:1px solid #334155} h1{margin:0;font-size:27px} header p{margin:6px 0 0;color:#aab7ca}
+    #chat{flex:1;padding:18px 0;display:flex;flex-direction:column;gap:12px}
+    .msg{padding:12px 14px;border-radius:14px;max-width:90%;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+    .user{align-self:flex-end;background:#2563eb}.bot{align-self:flex-start;background:#263449}
+    form{display:flex;gap:8px;padding:12px 0} textarea{flex:1;resize:vertical;min-height:50px;max-height:150px;border:1px solid #475569;border-radius:12px;background:#1e293b;color:white;padding:12px;font:inherit}
+    button{border:0;border-radius:12px;padding:0 18px;background:#3b82f6;color:white;font-weight:700;font-size:16px}
+    button:disabled{opacity:.55} footer{font-size:12px;color:#93a4ba;text-align:center}
+  </style>
+</head>
+<body>
+<main>
+  <header><h1>RayyAi</h1><p>မင်္ဂလာပါ။ ဘာမေးချင်လဲ?</p></header>
+  <section id="chat" aria-live="polite"><div class="msg bot">မင်္ဂလာပါ။ RayyAi မှ ကြိုဆိုပါတယ်။ မေးခွန်းတစ်ခု ရိုက်ထည့်လိုက်ပါ။</div></section>
+  <form id="form"><textarea id="prompt" placeholder="မေးခွန်းရေးပါ..." required></textarea><button id="send">ပို့မယ်</button></form>
+  <footer>RayyAi · AI responses may not always be accurate.</footer>
+</main>
+<script>
+const form=document.getElementById('form'), promptBox=document.getElementById('prompt');
+const chat=document.getElementById('chat'), send=document.getElementById('send');
+const history=[];
+function add(text,who){const el=document.createElement('div');el.className='msg '+who;el.textContent=text;chat.appendChild(el);el.scrollIntoView({behavior:'smooth',block:'end'});return el;}
+form.addEventListener('submit',async e=>{
+ e.preventDefault();const text=promptBox.value.trim();if(!text)return;
+ add(text,'user');history.push({role:'user',content:text});promptBox.value='';send.disabled=true;send.textContent='...';
+ const pending=add('စဉ်းစားနေပါတယ်...','bot');
+ try{
+  const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||'Request failed');
+  const answer=data.reply||'အဖြေမရရှိပါ။';pending.textContent=answer;history.push({role:'assistant',content:answer});
+ }catch(err){pending.textContent='အမှား: '+err.message;history.pop();}
+ finally{send.disabled=false;send.textContent='ပို့မယ်';promptBox.focus();}
+});
+</script>
+</body>
+</html>
